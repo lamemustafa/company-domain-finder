@@ -1,4 +1,4 @@
 requests==2.22.0
+cfscrape==2.0.8
 fuzzywuzzy==0.17.0
-pandas==0.25.1
-google==2.0.2
+beautifulsoup4==4.8.1
