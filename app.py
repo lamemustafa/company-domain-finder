@@ -121,77 +121,83 @@ def getDomain(i,company_search):
     only_div_tags = SoupStrainer('li',{'class': 'b_algo'})
     if i==1:
         res = requests.get('https://www.bing.com/search?q='+\
-                    f'{company_search}')
+                    f'{company_search}',headers=HEADER)
         if res.status_code == 200:
             c = res.content
             soup = BeautifulSoup(c,'html.parser',
             parse_only=only_div_tags)
-            for a in soup.findAll('a'):
-                link = a['href']
-                if '/wiki/' not in link and '//' in link:
-                    link = link.split('//')[1].split('/')[0]
-                    if 'www.' in link:
-                        link = link.split('www.')[1]
-                    if link not in temp:
-                        temp.append(link.lower())
+            for h2 in soup.findAll('h2'):
+                if h2.a:
+                    link = h2.a['href']
+                    if '/wiki/' not in link and '//' in link:
+                        link = link.split('//')[1].split('/')[0]
+                        if 'www.' in link:
+                            link = link.split('www.')[1]
+                        if link not in temp:
+                            temp.append(link.lower())
     
     if i==2:
         res = requests.get('https://www.bing.com/search?q=crunchbase:%20'+\
-            f'{company_search}')
+            f'{company_search}',headers=HEADER)
         temp1 = []
         if res.status_code == 200:
             c = res.content
             soup = BeautifulSoup(c,'html.parser',
                     parse_only=only_div_tags)
-            for a in soup.findAll('a'):
-                link = a['href']
-                if 'www.crunchbase.com/organization/' in link and '//' in link:
-                    temp1.append(link)
+            for h2 in soup.findAll('h2'):
+                if h2.a:
+                    link = h2.a['href']
+                    if 'www.crunchbase.com/organization/' in link and '//' in link:
+                        temp1.append(link)
         pool1 = multiprocessing.Pool(5)
         temp5 = pool1.map(getDomainCrunchbase,[link for link in temp1])
     
     if i==3:
         res = requests.get('https://www.bing.com/search?q=twitter:%20'+\
-            f'{company_search}')
+            f'{company_search}',headers=HEADER)
         temp2 = []
         if res.status_code == 200:
             c = res.content
             soup = BeautifulSoup(c,'html.parser',
                     parse_only=only_div_tags)
-            for a in soup.findAll('a'):
-                link = a['href']
-                if '//twitter.com/' in link:
-                    temp2.append(link)
+            for h2 in soup.findAll('h2'):
+                if h2.a:
+                    link = h2.a['href']
+                    if '//twitter.com/' in link and '/status/' not in link:
+                        temp2.append(link)
         pool2 = multiprocessing.Pool(5)
         temp6 = pool2.map(getDomainTwitter,[link for link in temp2])
 
     if i == 5:
         res = requests.get('https://www.bing.com/search?q=owler:%20'+\
-                    f'{company_search}')
+                    f'{company_search}',headers=HEADER)
         temp3 = []
         if res.status_code == 200:
             c = res.content
             soup = BeautifulSoup(c,'html.parser',
                     parse_only=only_div_tags)
-            for a in soup.findAll('a'):
-                link = a['href']
-                if 'www.owler.com/company' in link:
-                    temp3.append(link)
+            for h2 in soup.findAll('h2'):
+                if h2.a:
+                    link = h2.a['href']
+                    if 'www.owler.com/company' in link:
+                        temp3.append(link)
         pool3 = multiprocessing.Pool(POOL_COUNT)
         temp7 = pool3.map(getDomainOwler,[link for link in temp3])
 
     if i==4:
         res = requests.get('https://www.bing.com/search?q=angellist:%20'+\
-            f'{company_search}')
+            f'{company_search}',headers=HEADER)
         temp4 = []
         if res.status_code == 200:
             c = res.content
             soup = BeautifulSoup(c,'html.parser',
                     parse_only=only_div_tags)
-            for a in soup.findAll('a'):
-                link = a['href']
-                if '//angel.co/' in link:
-                    temp4.append(link)
+            for h2 in soup.findAll('h2'):
+                if h2.a:
+                    link = h2.a['href']
+                    if '//angel.co/' in link and '/jobs/' not in link:
+                        if '/company/' in link or '/l/' in link:
+                            temp4.append(link)
         pool4 = multiprocessing.Pool(5)
         temp8 = pool4.map(getDomainAngel,[link for link in temp4])
 
@@ -225,30 +231,22 @@ def getResults(company_name):
         most_probable_domain = max(doms.items(), 
         key=operator.itemgetter(1))[0]
     except Exception as e:
-        print('Please Try Again')
+        print('Please Try Again',e)
         exit()
     cnt=0
     max_score = 0
     other_option = None
     for i in doms.keys():
-        score = fuzz.token_sort_ratio(company_name,i)
+        score = fuzz.token_set_ratio(company_name,i)
         if int(score) >= 50:
             cnt+=int(doms[i])
-        if max_score < score:
-            max_score = score
-            other_option = i
-
-    check_score =  fuzz.token_sort_ratio(company_name,
-    most_probable_domain)
-    if check_score < 50:
-        most_probable_domain = other_option
 
     try:
         ratio = round(doms[most_probable_domain]/cnt,4)
         if ratio>1:
             ratio = MIN_RATIO
     except Exception as e:
-        print('Please Try Again')
+        print('Please Try Again',e)
         exit()
     result = [company_name,most_probable_domain,cnt,ratio]
     print(doms)
