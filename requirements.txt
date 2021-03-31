@@ -1,5 +1,5 @@
 requests==2.22.0
 fuzzywuzzy==0.17.0
 cfscrape==2.0.8
-lxml==4.4.1
+lxml==4.6.3
 beautifulsoup4==4.8.1
