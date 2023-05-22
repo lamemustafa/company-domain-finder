@@ -1,4 +1,4 @@
-requests==2.22.0
+requests==2.31.0
 fuzzywuzzy==0.17.0
 cfscrape==2.0.8
 lxml==4.9.1
